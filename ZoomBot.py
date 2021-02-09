@@ -1,6 +1,3 @@
-# We are going to edit this soon
-# And make it working
-
 from selenium.webdriver import Chrome
 from chromedriver_autoinstaller import install  # This module will automatically download chromedriver.exe
 from time import sleep
