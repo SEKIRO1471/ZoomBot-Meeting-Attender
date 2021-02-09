@@ -1,37 +1,87 @@
-#We are going to edit this soon
-#And make it working
+# We are going to edit this soon
+# And make it working
 
-from selenium import webdriver
-import chromedriver_autoinstaller  # This module will automatically download chromedriver.exe
+from selenium.webdriver import Chrome
+from chromedriver_autoinstaller import install  # This module will automatically download chromedriver.exe
 from time import sleep
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.options import Options
 
-options = Options()
-options.headless = True  # To make browser visible set it to False
-path = chromedriver_autoinstaller.install()  # Returns path of the chromedriver.exe
-driver = webdriver.Chrome(executable_path=path, options=options)
 
-meeting_id = input("Enter the meeting id")  # meeting id of the meeting to join
+class Browser:
+    def __init__(self):
+        self.meeting_id = input("Enter Meeting ID: ")
+        self.meeting_password = input("Enter Meeting Password: ")
+        self.headless = False
+        options = Options()
+        options.headless = self.headless  # To make browser visible set it to False
+        path = install()  # Path of the chromedriver.exe
+        self.driver = Chrome(executable_path=path, options=options)
+        self.driver.get("https://zoom.us/signin")
 
-driver.get("https://zoom.us/signin")
-email_box = driver.find_element_by_id("email")
-email_box.send_keys(input("Enter your Email-id"))  # Your zoom Email-id for login
-password_box = driver.find_element_by_id("password")
-password_box.send_keys(input("Enter your Password"))  # Your zoom Password for login
-sign_in_btn = driver.find_element_by_xpath(
-    """/html/body/div[1]/div[3]/div[2]/div[2]/div/div[2]/div/form/div[3]/div/div[1]/a""")
-sign_in_btn.click()
+    def join_btn_clicker(self):
+        join_btn = self.driver.find_element_by_xpath("""//*[@id="joinBtn"]""")
+        join_btn.click()
 
-sleep(0.5)  # Delay to avoid conflict while redirecting to different page
+    def meeting_id_in(self):
+        id_join = True
+        while id_join:
+            try:
+                self.join_btn_clicker()
+                id_join = False
+            except NoSuchElementException:
+                pass
+        sleep(2)
 
-driver.get("https://zoom.us/j/" + meeting_id + "?status=success")
+    def meeting_password_in(self):
+        password_box = self.driver.find_element_by_xpath('''//*[@type="password"]''')
+        password_box.send_keys(self.meeting_password)
+        pass_join = True
+        while pass_join:
+            try:
+                self.join_btn_clicker()
+                pass_join = False
+            except NoSuchElementException:
+                pass
 
-join_online = driver.find_element_by_xpath("""/html/body/div[2]/div/div/div[4]/a""")
-driver.get(join_online.get_attribute("href"))
+    def join_meeting(self):
+        self.driver.get("https://zoom.us/wc/join/" + self.meeting_id)
+        self.meeting_id_in()
+        self.meeting_password_in()
+        print("Done!")
+        while True:
+            pass
 
-try:
-    join_btn = driver.find_element_by_id("joinBtn")
-    join_btn.click()
-except NoSuchElementException:
-    pass
+
+class GmailLogin(Browser):
+    def __init__(self):
+        super().__init__()
+        print("Provide your Gmail Credentials:")
+        self.gmail_id = input("Enter Email Id: ")
+        self.gmail_password = input("Enter password: ")
+        self.driver.find_element_by_xpath('''//*[@id="login"]/div/div[3]/div/div[4]/a[2]''').click()
+        self.gmail_login()
+
+    # Login via Gmail
+    def gmail_login(self):
+        email_box = self.driver.find_element_by_xpath('''//*[@type="email"]''')
+        email_box.send_keys(self.gmail_id)  # Your Gmail Email-id for login
+        self.driver.find_element_by_xpath('''//*[@id="identifierNext"]''').click()  # Next button
+        sleep(3)
+        password_box = self.driver.find_element_by_xpath('''//*[@type="password"]''')
+        password_box.send_keys(self.gmail_password)  # Your Gmail Password for login
+        self.driver.find_element_by_xpath('''//*[@id="passwordNext"]''').click()  # Next button
+        print("Please confirm it's you...")
+        sleep(40)
+
+
+if __name__ == '__main__':
+    login_methods = {'Gmail': GmailLogin}
+    print("Welcome to Meeting Attender")
+    print("Select a login method from the following:")
+
+    for key in login_methods.keys():
+        print(key)
+
+    choice = input("Enter Choice: ").capitalize()
+    login_methods[choice]().join_meeting()
