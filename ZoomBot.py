@@ -100,7 +100,7 @@ class WhatsappGetLink:
         sleep(5)
 
     def find_link(self):
-        date = input('Enter date in d/mm/yyyy: ')
+        date = input('Enter date in m/dd/yyyy: ')
         found = False
         while not found:
             try:
