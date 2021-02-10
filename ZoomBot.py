@@ -7,14 +7,11 @@ from selenium.webdriver.chrome.options import Options
 
 class Browser:
     def __init__(self):
-        self.meeting_id = input("Enter Meeting ID: ")
-        self.meeting_password = input("Enter Meeting Password: ")
         self.headless = False
         options = Options()
         options.headless = self.headless  # To make browser visible set it to False
         path = install()  # Path of the chromedriver.exe
         self.driver = Chrome(executable_path=path, options=options)
-        self.driver.get("https://zoom.us/signin")
 
     def join_btn_clicker(self):
         join_btn = self.driver.find_element_by_xpath("""//*[@id="joinBtn"]""")
@@ -41,7 +38,9 @@ class Browser:
             except NoSuchElementException:
                 pass
 
-    def join_meeting(self):
+    def join_via_pass_id(self):
+        self.meeting_id = input("Enter Meeting ID: ")
+        self.meeting_password = input("Enter Meeting Password: ")
         self.driver.get("https://zoom.us/wc/join/" + self.meeting_id)
         self.meeting_id_in()
         self.meeting_password_in()
@@ -49,10 +48,15 @@ class Browser:
         while True:
             pass
 
+    def join_via_link(self, link_src):
+        self.driver.get(link_src)
+        self.join_btn_clicker()
 
-class GmailLogin(Browser):
-    def __init__(self):
-        super().__init__()
+
+class GmailLogin:
+    def __init__(self, driver):
+        self.driver = driver
+        self.driver.get("https://zoom.us/signin")
         print("Provide your Gmail Credentials:")
         self.gmail_id = input("Enter Email Id: ")
         self.gmail_password = input("Enter password: ")
@@ -72,13 +76,82 @@ class GmailLogin(Browser):
         sleep(40)
 
 
+class WhatsappGetLink:
+    def __init__(self, driver):
+        self.driver = driver
+        self.group_name = input('Enter whatsapp group/contact name: ')
+        self.driver.get(r'https://web.whatsapp.com/')
+        sleep(10)
+        self.open_links()
+        self.find_link()
+
+    def open_links(self):
+        group = self.driver.find_element_by_xpath(r'//*[@title="' + self.group_name + '"]')
+        group.click()
+        sleep(0.5)
+        menu_bar = self.driver.find_element_by_xpath(r'//header/div/div/div/*[@title="' + self.group_name + '"]')
+        menu_bar.click()
+        sleep(0.5)
+        group_data = self.driver.find_elements_by_xpath(r'//*[@data-testid="chevron-right-alt"]')[0]
+        group_data.click()
+        sleep(0.5)
+        links_tab = self.driver.find_element_by_xpath(r'//*[@title="Links"]')
+        links_tab.click()
+        sleep(5)
+
+    def find_link(self):
+        date = input('Enter date in d/mm/yyyy: ')
+        found = False
+        while not found:
+            try:
+                links = self.driver.find_elements_by_xpath(
+                    r'//*[contains(@data-pre-plain-text, "' + date + '")]//*[@title="Join our '
+                    r'Cloud HD Video Meeting"]')
+                try:
+                    self.link = links[0]
+                except IndexError:
+                    continue
+                found = True
+            except NoSuchElementException:
+                pass
+
+    def get_link(self):
+        self.link.click()
+        sleep(5)
+
+        self.driver.switch_to.window(self.driver.window_handles[-1])
+        url = self.driver.current_url
+        url = url.replace('/j/', '/wc/join/')
+        return url
+
+
 if __name__ == '__main__':
-    login_methods = {'Gmail': GmailLogin}
-    print("Welcome to Meeting Attender")
+    browser = Browser()
+    print("Welcome to Meeting Attender\n")
+
+    method = input("Do you want join via Link or Id?\n").lower()
+
+    if method == 'link':
+        print("Select a link source from the following:")
+        link_getter = {'Whatsapp': WhatsappGetLink}
+
+        for key in link_getter.keys():
+            print(key)
+
+        choice = input("Enter Choice: ").capitalize()
+        src = link_getter[choice](browser.driver)
+        link = src.get_link()
+
     print("Select a login method from the following:")
+    login_methods = {'Gmail': GmailLogin}
 
     for key in login_methods.keys():
         print(key)
 
     choice = input("Enter Choice: ").capitalize()
-    login_methods[choice]().join_meeting()
+    if method == 'link':
+        login_methods[choice](browser.driver)
+        browser.join_via_link(link)
+    elif method == 'id':
+        login_methods[choice](browser.driver)
+        browser.join_via_pass_id()
