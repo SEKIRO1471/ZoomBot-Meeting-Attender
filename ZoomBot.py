@@ -39,8 +39,8 @@ class Browser:
                 pass
 
     def join_via_pass_id(self):
-        self.meeting_id = input("Enter Meeting ID: ")
-        self.meeting_password = input("Enter Meeting Password: ")
+        self.meeting_id = input("89243659844: ")
+        self.meeting_password = input("XdcB26: ")
         self.driver.get("https://zoom.us/wc/join/" + self.meeting_id)
         self.meeting_id_in()
         self.meeting_password_in()
@@ -58,8 +58,8 @@ class GmailLogin:
         self.driver = driver
         self.driver.get("https://zoom.us/signin")
         print("Provide your Gmail Credentials:")
-        self.gmail_id = input("Enter Email Id: ")
-        self.gmail_password = input("Enter password: ")
+        self.gmail_id = input("sudeepsj18@gmail.com: ")
+        self.gmail_password = input("imsekiroxsid: ")
         self.driver.find_element_by_xpath('''//*[@id="login"]/div/div[3]/div/div[4]/a[2]''').click()
         self.gmail_login()
 
@@ -100,7 +100,7 @@ class WhatsappGetLink:
         sleep(5)
 
     def find_link(self):
-        date = input('Enter date in m/dd/yyyy: ')
+        date = input('20/06/2021: ')
         found = False
         while not found:
             try:
